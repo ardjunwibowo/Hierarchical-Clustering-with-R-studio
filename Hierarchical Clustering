@@ -1,0 +1,154 @@
+library(cluster)
+library(car)
+
+datakp=read.csv("E:\\ardjun\\PROGRAM R\\datakp.csv",header=TRUE,sep=";")
+datakp
+
+summary(datakp[,2:4])
+
+multikol<-cor(datakp[,2:4])
+multikol
+
+cor.test(datakp$TPT,datakp$Penempatan_TKI)
+cor.test(datakp$TPT,datakp$IKK)
+cor.test(datakp$Penempatan_TKI,datakp$TPT)
+cor.test(datakp$Penempatan_TKI,datakp$IKK)
+cor.test(datakp$IKK,datakp$TPT)
+cor.test(datakp$IKK,datakp$Penempatan_TKI)
+
+
+#UJI KMO
+kmo <- function(x)
+{
+  x <- subset(x, complete.cases(x))       # menghilangkan data kosong (NA)
+  r <- cor(x)                             # Membuat matrix korelasi
+  r2 <- r^2                               # nilai koefisien untuk r squared
+  i <- solve(r)                           # Inverse matrix dari matrix korelasi
+  d <- diag(i)                            # element diagonal dari inverse matrix
+  p2 <- (-i/sqrt(outer(d, d)))^2          # koefisien korelasi Parsial kuadrat
+  diag(r2) <- diag(p2) <- 0               # menghapus element diagonal 
+  KMO <- sum(r2)/(sum(r2)+sum(p2))
+  MSA <- colSums(r2)/(colSums(r2)+colSums(p2))
+  return(list(KMO=KMO, MSA=MSA))
+}
+
+kmo(datakp[,2:4])
+
+#uji bart
+
+uji_bart<-function(x)
+{
+  method<-"Bartlett's test of sphericity"
+  data.name<-deparse(substitute(x))
+  x<-subset(x, complete.cases(x))
+  n<-nrow(x)
+  p<-ncol(x)
+  chisq<-(1-n+(2*p+5)/6)*log(det(cor(x)))
+  df<-p*(p-1)/2
+  p.value<-pchisq(chisq,df,lower.tail = FALSE)
+  names(chisq)<-"Khi-squared"
+  names(df)<-"df"
+  return(structure(list(statistic=chisq,parameter=df,
+                        p.value=p.value, method=method, data.name=data.name),class="htest"))
+}
+
+uji_bart(datakp[,2:4])
+
+#jarak
+jarak=dist(scale(datakp[,2:4]))
+jarak
+
+
+#-------------------------------METODE CENTROID--------------------------------
+hierarkicent<-hclust(dist(scale(datakp[,2:4])), method="centroid")
+hierarkicent
+windows()
+plot(hierarkicent) #dendogram
+rect.hclust(hierarkicent,3) 		  #plot mengelompokkan data
+
+anggotacent<-data.frame(id=datakp$Wilayah_Jateng,cutree(hierarkicent,k=3)) #hasil kelompok data 
+anggotacent
+
+cophenetic(hierarkicent) #jarak cophenetic centroid
+#korelasi cophenetic
+d1 <- dist(datakp[,2:4])
+hc <- hclust(d1, "centroid")
+d2 <- cophenetic(hc)
+corcent=cor(d1, d2) 
+corcent
+
+#-------------------------------METODE SINGLE----------------------------------
+hierarkising<-hclust(dist(scale(datakp[,2:4])), method="single")
+hierarkising
+windows()
+plot(hierarkising) #dendogram
+rect.hclust(hierarkising,3) 		  #plot mengelompokkan data
+
+anggotasing<-data.frame(id=datakp$Wilayah_Jateng, cutree(hierarkising,k=3)) #hasil kelompok data
+anggotasing
+
+cophenetic(hierarkising) #jarak cophenetic single
+#korelasi cophenetic
+d1 <- dist(datakp[,2:4])
+hc <- hclust(d1, "single")
+d2 <- cophenetic(hc)
+corsing=cor(d1, d2)
+corsing
+
+#----------------------------METODE AVERAGE------------------------------------
+hierarkiave<-hclust(dist(scale(datakp[,2:4])), method="ave")
+hierarkiave
+windows()
+plot(hierarkiave) #dendogram
+rect.hclust(hierarkiave,3) 		#plot mengelompokkan data
+
+anggotaave<-data.frame(id=datakp$Wilayah_Jateng, cutree(hierarkising,k=3)) #hasil kelompok data
+anggotaave
+
+cophenetic(hierarkiave) #jarak cophenetic average
+#korelasi cophenetic
+d1 <- dist(datakp[,2:4])
+hc <- hclust(d1, "ave")
+d2 <- cophenetic(hc)
+corave=cor(d1, d2)
+corave
+
+
+#---------------------------------METODE WARD----------------------------------
+hierarkiward<-hclust(dist(scale(datakp[,2:4])), method="ward.D")
+hierarkiward
+windows()
+plot(hierarkiward) #dendogram
+rect.hclust(hierarkiward,3) 		  #plot mengelompokkan data
+
+anggotaward<-data.frame(id=datakp$Wilayah_Jateng, cutree(hierarkiward,k=3)) #hasil kelompok data
+anggotaward
+
+cophenetic(hierarkiward) #jarak cophenetic ward
+#korelasi cophenetic
+d1 <- dist(datakp[,2:4])
+hc <- hclust(d1, "ward.D")
+d2 <- cophenetic(hc)
+corward=cor(d1, d2)
+corward
+
+
+#-----------------------------METODE COMPLETE----------------------------------
+hierarkicomp<-hclust(dist(scale(datakp[,2:4])), method="complete")
+hierarkicomp
+windows()
+plot(hierarkicomp) #dendogram
+rect.hclust(hierarkicomp,3) 		  #plot mengelompokkan data
+
+anggotacomp<-data.frame(id=datakp$Wilayah_Jateng, cutree(hierarkicomp,k=3)) #hasil kelompok data
+anggotacomp
+
+
+cophenetic(hierarkicomp) #jarak cophenetic complete 
+#korelasi cophenetic
+d1 <- dist(datakp[,2:4])
+hc <- hclust(d1, "complete")
+d2 <- cophenetic(hc)
+corcomp=cor(d1, d2)
+corcomp
+
